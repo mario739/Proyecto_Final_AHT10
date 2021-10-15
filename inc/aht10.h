@@ -14,19 +14,18 @@
 
 #define AHT10_CMD_INITIALIZE                0xE1    /*!< comando de inicializacion */
 #define AHT10_CMD_TRIGGER_MEASUREMENT       0xAC    /*!< comando para iniciar medicion */
-#define AHT10_CMD_SOFT_RESET                (uint8_t 0xBA)  /*!< comando para resetear*/
+#define AHT10_CMD_SOFT_RESET                0xBA /*!< comando para resetear*/
 #define AHT10_DATA_0                        0x33
 #define AHT10_DATA_1                        0x00
 
 
-
+#define AHT10_DELAY_POWER_ON                 40
 #define AHT10_DELAY_RESET                    25
-#define AHT10_DELAY_STARD                    40
-#define AHT10_DELAY_MEASUREMENT              75
+#define AHT10_DELAY_MEASUREMENT              350
+#define AHT10_DELAY_LAUNCH_MEASUREMENT       80
 
-
-
-
+#define TEMPERATURE(A)                    (uint8_t) ((A *0.000191)-50)
+#define HUMEDITY(A)                       (uint8_t) (A * 0.000095)
 
 
 //      void  escribir(uint8_t addr, void* data, uint8_t amount)
