@@ -98,15 +98,17 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Transmit(&huart2,"Hardware Inicializado \n",23,10);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   char bufferstring[100];
   aht10Init(&aht10Data,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port,AHT10_ADDRESS_SLAVE);
+  HAL_UART_Transmit(&huart2,"Estructura Cargada \n",18,10);
   aht10SoftReset(&aht10Data);
   aht10StartMeasurement(&aht10Data);
+  HAL_UART_Transmit(&huart2,"Driver Inicializado \n",21,10);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -117,7 +119,6 @@ int main(void)
 	  HAL_UART_Transmit(&huart2,bufferstring,tamano,10);
 	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 }
