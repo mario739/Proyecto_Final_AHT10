@@ -12,8 +12,7 @@
 
 
 /* Prototipos de funciones privadas ------------------------------------------*/
-static void aht10Read(aht10Data_t *obj, uint8_t *regToRead , uint8_t amount);
-static void aht10Write(aht10Data_t *obj, uint8_t *data, uint8_t amount);
+
 static void aht10launchmeasurement(aht10Data_t *obj);
 
 //Buffer de comandos 
@@ -44,37 +43,6 @@ void aht10Init(aht10Data_t *obj, aht10WriteFcn_t fncWritePort, aht10ReadFcn_t fn
 }
 
 /*************************************************************************************************
-	 *  @brief Escribe datos en el modulo 
-     *
-     *
-	 *  @param		obj	     Estructura del tipo ahtData_t que contiene las funciones de mas bajo nivel
-   *  @param    data     Datos a ser enviados 
-   *  @param    amount   Cantidad de bytes a ser enviados 
-	 *  @return     None.
-	 *  
-***************************************************************************************************/
-static void aht10Write(aht10Data_t *obj, uint8_t *data, uint8_t amount)
-{
-      obj->writeI2C(obj->addresSlave,data,amount);
-}
-/*************************************************************************************************
-	 *  @brief Lee los datos del sensor 
-     *
-     *  @details
-     *   Se manda los datos que llegan a la funcion a la funcion de lectura 
-     *
-	 *  @param		obj	        Estructura del tipo ahtData_t que contiene las funciones de mas bajo nivel
-   *  @param    regToRead   Buffer para guardar los datos
-   *  @param    amount      Cantidad de registros datos a leer 
-	 *  @return     None.
-	 *  
-***************************************************************************************************/
-static void aht10Read(aht10Data_t *obj, uint8_t *regToRead , uint8_t amount)
-{
-    obj->readI2C(obj->addresSlave, regToRead ,amount);
-}
-
-/*************************************************************************************************
 	 *  @brief Resetea el modulo 
      *
 	 *  @param		obj  Estructura del tipo ahtData_t que contiene las funciones de mas bajo nivel
@@ -83,7 +51,8 @@ static void aht10Read(aht10Data_t *obj, uint8_t *regToRead , uint8_t amount)
 ***************************************************************************************************/
 void aht10SoftReset(aht10Data_t *obj)
 {
-  aht10Write(obj,AHT10_CMD_SOFT_RESET,1);
+  
+  obj->writeI2C(obj->addresSlave,AHT10_CMD_SOFT_RESET,1);
   obj->delay_ms_I2C(AHT10_DELAY_RESET);
 }
 
@@ -97,10 +66,10 @@ void aht10SoftReset(aht10Data_t *obj)
 
 void aht10StartMeasurement(aht10Data_t *obj)
 {
-  aht10Write(obj,AHT10_CMD_INITIALIZE,1);
+  
+  obj->writeI2C(obj->addresSlave,AHT10_CMD_INITIALIZE,1);
   obj->delay_ms_I2C(AHT10_DELAY_MEASUREMENT);
 }
-
 
 /*************************************************************************************************
 	 *  @brief Lanza el inicio la conversion 
@@ -114,7 +83,8 @@ void aht10StartMeasurement(aht10Data_t *obj)
 ***************************************************************************************************/
 static void aht10launchmeasurement(aht10Data_t *obj)
 {
-  aht10Write(obj,bufferInit,3);
+  
+  obj->writeI2C(obj->addresSlave,bufferInit,3);
   obj->delay_ms_I2C(AHT10_DELAY_LAUNCH_MEASUREMENT);
 }
 
@@ -135,8 +105,8 @@ uint8_t aht10GetTemperature(aht10Data_t *obj)
    /* Se mandan los comandos para que empieze la medicion */ 
   aht10launchmeasurement(obj);
   /*Leemos el dato crudo desde el dispositivo y terminamos la transaccion*/
-  aht10Read(obj,bufferRead,6);  
-
+    
+  obj->readI2C(obj->addresSlave, bufferRead ,6);
   uint32_t Data_Temperature=((uint32_t)(bufferRead[3] & 0x0F)<<16) | ((uint16_t) bufferRead[4]<<8)| bufferRead[5];
   return TEMPERATURE(Data_Temperature);
 
@@ -161,8 +131,8 @@ uint8_t aht10GetHumedity(aht10Data_t *obj)
   
 	/*Leemos el dato crudo desde el dispositivo y terminamos la transaccion*/
 	 
-  aht10Read(obj,bufferRead,6);
   
+  obj->readI2C(obj->addresSlave, bufferRead ,6);
 	 /*Aplicamos la conversion correspondiente segun la hoja de datos y retornamos*/
   uint32_t Data_Humedity=(((uint32_t)bufferRead[1]<<16) | ((uint16_t)bufferRead[2]<<8) | (bufferRead[3]))>>4;
   return HUMEDITY(Data_Humedity);
@@ -185,6 +155,7 @@ uint8_t aht10GetStatus(aht10Data_t *obj)
   /* Se mandan los comandos para que empieze la medicion */ 
   aht10launchmeasurement(obj);
   /*Leemos el dato crudo desde el dispositivo*/
-  aht10Read(obj,&byteStatus,1);
+  obj->readI2C(obj->addresSlave, &byteStatus ,1);
+ 
   return  byteStatus;
 }
