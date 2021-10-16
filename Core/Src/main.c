@@ -1,6 +1,8 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
+  * @author  Mario Aguilar Montoya 
+  * @date    10/15/2021 
   * @file           : main.c
   * @brief          : Main program body
   ******************************************************************************
@@ -103,18 +105,24 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char bufferstring[100];
+  char bufferstring[100];      /*!<Buffer para mostrar los datos   */
+
+   /* Cargamos los punteros a la estructura */
   aht10Init(&aht10Data,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port,AHT10_ADDRESS_SLAVE);
   HAL_UART_Transmit(&huart2,"Estructura Cargada \n",18,10);
+  /* Reseteamos el modulo     */
   aht10SoftReset(&aht10Data);
+  /* Inicializamos el modulo  */
   aht10StartMeasurement(&aht10Data);
   HAL_UART_Transmit(&huart2,"Driver Inicializado \n",21,10);
   while (1)
   {
     /* USER CODE END WHILE */
 	  aht10GetStatus(&aht10Data);
+    /* Se obtiene los valores de temperatura y humedad */
 	  uint8_t temperatura = aht10GetTemperature(&aht10Data);
 	  uint8_t humedad=aht10GetHumedity(&aht10Data);
+    /* Se muestran los datos por la UART */
 	  uint8_t tamano=sprintf(bufferstring,"temperatura %u C,humedad %u \%% \n",temperatura,humedad);
 	  HAL_UART_Transmit(&huart2,bufferstring,tamano,10);
 	  HAL_Delay(10);

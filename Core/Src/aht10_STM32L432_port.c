@@ -1,25 +1,75 @@
 
+/**
+  ******************************************************************************
+  * @file    aht10_STM32L432_port.c
+  * @author  Mario Aguilar Montoya 
+  * @date    10/15/2021
+  * @brief   port aht10_STM32L432
+  ******************************************************************************
+  */
 
+/* Includes ------------------------------------------------------------------*/
 #include "aht10_STM32L432_port.h"
 
-
+//Estructura tipo I2C
 I2C_HandleTypeDef hi2c1;
+
+
+/*************************************************************************************************
+	 *  @brief Funcion para escribir por I2C
+     *
+     *
+     *  @details
+     *   	Esta funcion es especifica para el hardware utilizado. Notar que se basa en una capa
+     *   	HAL existente de STM.
+     *
+	 *  @param		addr	  Direccion del sensor
+   *  @param    buffer  Buffer de datos para ser trasmitidos  
+   *  @param    amount  Cantidad de bytes a transmitir 
+	 *  @return     None.
+	 *  
+***************************************************************************************************/
 
 void  write_I2C_STM32L432_port(uint8_t addr, void* buffer, uint8_t amount){
        HAL_I2C_Master_Transmit(&hi2c1,addr<<1, buffer,amount,800);
 }
+
+/*************************************************************************************************
+	 *  @brief Funcion para leer por I2C
+     *
+     *  @details
+     *   	Esta funcion es especifica para el hardware utilizado. Notar que se basa en una capa
+     *   	HAL existente de STM.
+     *
+	 *  @param		addr	       Direccion del sensor
+   *  @param    buffer       Buffer para resivir los datos 
+   *  @param    amount       Cantidad de bytes a leer
+	 *  @return     None.
+	 *  
+***************************************************************************************************/
 void  read_I2C_STM32L432_port(uint8_t addr, void* buffer, uint8_t amount){
        HAL_I2C_Master_Receive(&hi2c1, addr<<1, buffer,amount,800);
 }
+
+/*************************************************************************************************
+	 *  @brief Funcion para hacer un retardo
+     *
+     *  @details
+     *   Esta funcion es especifica para el hardware utilizado. Notar que se basa en una capa
+     *   HAL existente de STM.
+     *
+	 *  @param		delay 	Tiempo del retardo en ms  
+	 *  @return     None.
+	 *  
+***************************************************************************************************/
 void delay_STM32L432_port(uint8_t delay){
         HAL_Delay(delay);
 }
 
 
 /**
-  * @brief I2C1 Initialization Function
+  * @brief Inicializacion del periferico I2C
   * @param None
-  * @retval None
   */
 void MX_I2C1_Init(void)
 {
