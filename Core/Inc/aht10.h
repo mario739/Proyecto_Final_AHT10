@@ -8,6 +8,7 @@
 #define AHT10_TRUE                          1  
 #define AHT10_SIZE_REG                      1    
 
+#define  AHT10_ADDRESS_SLAVE                (uint8_t) 0x38
 #define AHT10_CMD_INITIALIZE                (uint8_t) 0xE1    /*!< comando de inicializacion */
 #define AHT10_CMD_TRIGGER_MEASUREMENT       (uint8_t) 0xAC    /*!< comando para iniciar medicion */
 #define AHT10_CMD_SOFT_RESET                (uint8_t) 0xBA    /*!< comando para resetear*/

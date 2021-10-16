@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include "aht10.h"
 #include "aht10_STM32L432_port.h"
-#define  AHT10_ADDRESS_SLAVE                 (uint8_t)0x38
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -104,25 +103,19 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  char bufferstring[100];
   aht10Init(&aht10Data,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port,AHT10_ADDRESS_SLAVE);
   aht10SoftReset(&aht10Data);
   aht10StartMeasurement(&aht10Data);
   while (1)
   {
-	  char bufferstring[100];
-	  //aht10SoftReset(&aht10Data);
     /* USER CODE END WHILE */
-	// HAL_GPIO_TogglePin(GPIOB,3);
-	  //uint8_t buffer[12]="hola jjjjjj\n";
-	 // HAL_UART_Transmit(&huart2,buffer,12,10);
 	  aht10GetStatus(&aht10Data);
-	  uint8_t temperature2 = aht10GetTemperature(&aht10Data);
-	  uint8_t humedad2=aht10GetHumedity(&aht10Data);
-	  uint8_t tamano=sprintf(bufferstring,"temperatura %u C,humedad %u \%% \n",temperature2,humedad2);
+	  uint8_t temperatura = aht10GetTemperature(&aht10Data);
+	  uint8_t humedad=aht10GetHumedity(&aht10Data);
+	  uint8_t tamano=sprintf(bufferstring,"temperatura %u C,humedad %u \%% \n",temperatura,humedad);
 	  HAL_UART_Transmit(&huart2,bufferstring,tamano,10);
 	  HAL_Delay(10);
-
-	 // get_temperature();
     /* USER CODE BEGIN 3 */
 
   }
@@ -249,33 +242,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-uint32_t get_temperature()
-	  {
-/*
-		  uint8_t buffer[3]={0xAC,0x33,0x00};
-		  uint8_t buffer2[6]={0,0,0,0,0,0};
-		  uint32_t temperatura=0;
-		  uint8_t temperatura2=0;
-		  uint32_t humedad=0;
-		  uint8_t humedad2=0;
-		  char bufferstring[100];
-		  HAL_I2C_Master_Transmit(&hi2c1, 0x38<<1, buffer,3,200);
-		  HAL_Delay(80);
-		  HAL_I2C_Master_Receive(&hi2c1, 0x38<<1, buffer2,6,800);
-		  temperatura =((uint32_t)(buffer2[3]& 0x0F)<<16) | ((uint16_t) buffer2[4]<<8)| buffer2[5];
-		  humedad =(((uint32_t)buffer2[1]<<16) | ((uint16_t)buffer2[2]<<8) | (buffer2[3]))>>4 ;
-
-		  temperatura2= (uint8_t)((temperatura *0.000191)-50);
-		  humedad2=(uint8_t)(humedad * 0.000095);
-
-
-		  //uint8_t tamano=sprintf(bufferstring,"temperatura %u   humedad %u \n",temperatura2,humedad2);
-
-		  //HAL_UART_Transmit(&huart2,bufferstring,tamano,10);
-		  //HAL_UART_Transmit(&huart2,humedad2,1,10);
-		  return temperatura2;
-		  */
-	  }
 /* USER CODE END 4 */
 
 /**

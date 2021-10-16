@@ -14,7 +14,6 @@ static void aht10Write(aht10Data_t *obj, uint8_t *data, uint8_t amount);
 static void aht10launchmeasurement(aht10Data_t *obj);
 
 uint8_t bufferInit[3]={AHT10_CMD_TRIGGER_MEASUREMENT,AHT10_DATA_0,AHT10_DATA_1};
-uint8_t bufferCmdInt[3]={AHT10_CMD_INITIALIZE,0x08,AHT10_DATA_1 };
 
 void aht10Init(aht10Data_t *obj, aht10WriteFcn_t fncWritePort, aht10ReadFcn_t fncReadPort, delay1ms_t fncDelayPort,uint16_t addressSlave ){
 
@@ -42,7 +41,7 @@ void aht10SoftReset(aht10Data_t *obj)
 }
 void aht10StartMeasurement(aht10Data_t *obj)
 {
-  aht10Write(obj,bufferCmdInt,3);
+  aht10Write(obj,AHT10_CMD_INITIALIZE,1);
   obj->delay_ms_I2C(AHT10_DELAY_MEASUREMENT);
 }
 static void aht10launchmeasurement(aht10Data_t *obj)
