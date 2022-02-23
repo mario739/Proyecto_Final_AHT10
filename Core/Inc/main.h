@@ -39,10 +39,8 @@ extern "C" {
 /* USER CODE BEGIN ET */
 
 /* USER CODE END ET */
-
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -72,6 +70,8 @@ void Error_Handler(void);
 #define LD3_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
+//volatile char data_read[200];
+//volatile uint16_t data_count=0;
 
 uint32_t get_temperature();
 

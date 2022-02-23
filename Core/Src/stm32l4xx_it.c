@@ -56,7 +56,12 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
+extern uint8_t contador;
+extern uint8_t data[4];
+uint8_t numeros[15];
+volatile extern char buffer;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -198,6 +203,45 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32l4xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART2 global interrupt.
+  */
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+
+  //if(strstr(buffer,"OK")!=NULL) {
+	 // HAL_UART_AbortReceive_IT(&huart2);
+//}
+  //sprintf(numeros,"trama:%s,%u\r",data,contador);
+  //contador=contador+1;
+  //if(contador==4)
+  ///{
+  //HAL_UART_Transmit(&huart2,huart2.pRxBuffPtr,15,100);
+  //HAL_UART_AbortReceive(&huart2);
+	  //contador=0;
+  //}
+  /* USER CODE BEGIN USART2_IRQn 1 */
+  /* USER CODE END USART2_IRQn 1 */
+}
 
 /* USER CODE BEGIN 1 */
 

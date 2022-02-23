@@ -21,13 +21,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <stdio.h>
-#include "aht10.h"
-#include "aht10_STM32L432_port.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "driver_bg96.h"
+#include "aht10_STM32L432_port.h"
+#include "aht10.h"
+#include "MAX17043.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,11 +44,11 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
-
+I2C_HandleTypeDef hi2c1;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-aht10Data_t aht10Data;
-
+aht10_config_t aht10_config;
+max17043_data  max17043_config;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -57,14 +56,36 @@ aht10Data_t aht10Data;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
-
+//MX_USART2_UART_Init(void);
+//MX_I2C1_Init(void);
+void MX_USART1_UART_Init(void);
+em_bg96_error_handling send_data(char*cmd, char*expect,char *buffer,uint32_t timeout);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+typedef enum
+{
+	VERIFICARCONEXION,
+	SETEAR_APN,
+	ACTIVAR_PDP,
+	OPEN_SERVER,
+	CONECTAR_MQTT,
+	PUBLICAR_MQTT,
+	DESCONECTAR_MQTT,
+	DESCONECTAR_PDP,
+}estados_mqtt;
+st_bg96_config config_module={.send_data_device=NULL,.mode_echo=STATE_ECHO_OFF,.format_response=SHORT_RESULT};
+char buffer[150];
+char bufferhuart2[150];
+char data2[60]="{\"temperatura\":40,\"humedad\":40,\"bateria\":40}";
+uint8_t cont1=2;
+uint8_t cont2=5;
+uint8_t cont3=8;
+uint8_t cont4=0;
 
 /* USER CODE END 0 */
 
@@ -74,7 +95,6 @@ static void MX_USART2_UART_Init(void);
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -99,34 +119,118 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
+  MX_USART1_UART_Init();
+  aht10Init(&aht10_config,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port);
+  max17043Init(&max17043_config,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port);
+  init_driver(&config_module,send_data);
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit(&huart2,"Hardware Inicializado \n",23,10);
-  /* USER CODE END 2 */
+  st_config_context_tcp config_context_tcp={.context_id=1,.context_type=1,.tcp_apn="4g.entel",.tcp_username="",.tcp_password="",.method_authentication=1};
+  st_config_parameters_mqtt config_parameters_mqtt={.identifier_socket_mqtt=0,.quality_service=0,.host_name="\"industrial.api.ubidots.com\"",.port=1883,.mqtt_client_id="123456789",.mqtt_username="BBFF-YymzfOGNgPBLoxxhddQT99r9Wq77rL",.mqtt_password="BBFF-YymzfOGNgPBLoxxhddQT99r9Wq77rL"};
+  estados_mqtt ubibots=VERIFICARCONEXION;
+  char topic[]="/v1.6/devices/monitoreo_iot";
 
+  /* USER CODE END 2 */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char bufferstring[100];      /*!<Buffer para mostrar los datos   */
-
-   /* Cargamos los punteros a la estructura */
-  aht10Init(&aht10Data,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port,AHT10_ADDRESS_SLAVE);
-  HAL_UART_Transmit(&huart2,"Estructura Cargada \n",18,10);
-  /* Reseteamos el modulo     */
-  aht10SoftReset(&aht10Data);
-  /* Inicializamos el modulo  */
-  aht10StartMeasurement(&aht10Data);
-  HAL_UART_Transmit(&huart2,"Driver Inicializado \n",21,10);
+ /* char buffer2[10];
+  memset(buffer,0,150);
+  aht10_start_measurement(&aht10_config);
+  int8_t temperatura=0;
+  uint8_t humedad=0;
+  char buffersensore[50];*/
+  uint16_t version=0;
+  uint16_t configuracion=0;
+  char buffermedidor[50];
   while (1)
   {
     /* USER CODE END WHILE */
-	  aht10GetStatus(&aht10Data);
-    /* Se obtiene los valores de temperatura y humedad */
-	  uint8_t temperatura = aht10GetTemperature(&aht10Data);
-	  uint8_t humedad=aht10GetHumedity(&aht10Data);
-    /* Se muestran los datos por la UART */
-	  uint8_t tamano=sprintf(bufferstring,"temperatura %u C,humedad %u \%% \n",temperatura,humedad);
-	  HAL_UART_Transmit(&huart2,bufferstring,tamano,10);
-	  HAL_Delay(10);
-    /* USER CODE BEGIN 3 */
+	 /* aht10_get_humedity(&aht10_config, &humedad);
+	  aht10_get_temperature(&aht10_config, &temperatura);
+	  sprintf(buffersensore,"humedad:%u  temperatura:%i \r\n",humedad,temperatura);
+	  HAL_UART_Transmit(&huart2,buffersensore,50,200);
+	  HAL_Delay(100);*/
+	  version=max17043GetVersion(&max17043_config);
+	  HAL_Delay(100);
+	  configuracion=max17043_get_config(&max17043_config);
+	  HAL_Delay(100);
+	  sprintf(buffermedidor,"vesion:%u  temperatura:%i \r\n",version,configuracion);
+	  HAL_UART_Transmit(&huart2,buffermedidor,50,200);
+	  HAL_Delay(200);
+
+
+	 /* switch(ubibots)
+	  	{
+	  	  case VERIFICARCONEXION:
+	  		  if (get_status_modem(&config_module)==FT_BG96_OK)
+	  		  {
+	  			  ubibots=SETEAR_APN;
+		      }
+	  		  break;
+	  	  case SETEAR_APN:
+	  		  if (set_parameter_context_tcp(&config_module,&config_context_tcp)==FT_BG96_OK)
+	  		  {
+	  			  ubibots=ACTIVAR_PDP;
+	  		  }
+	  		  break;
+	  	  case ACTIVAR_PDP:
+	  		  if (activate_context_pdp(&config_module,&config_context_tcp)==FT_BG96_OK)
+	  		   {
+	  			  ubibots=OPEN_SERVER;
+	  		   }
+	  		  break;
+	  	  case OPEN_SERVER:
+	  		  if (open_client_mqtt(&config_module,&config_parameters_mqtt)==FT_BG96_OK)
+	  		   {
+	  			  ubibots=CONECTAR_MQTT;
+			   }
+	  		  break;
+	  	   case CONECTAR_MQTT:
+	  		   if (connect_server_mqtt(&config_module,&config_parameters_mqtt)==FT_BG96_OK)
+	  		   {
+	  			  ubibots=PUBLICAR_MQTT;
+	  		   }
+	  		   break;
+	  	   case PUBLICAR_MQTT:
+	  		    if (publish_message(&config_module,&config_parameters_mqtt,topic,data2)==FT_BG96_OK)
+	  		    {
+	  		    	if (cont4>=20) {
+						ubibots=DESCONECTAR_MQTT;
+						cont4=0;
+					}
+	  		    	else
+	  		    	{
+	  		    		memset(data2,0,60);
+	  		    		if (cont1>=90) cont1=0;
+	  		    		if (cont2>=90) cont2=0;
+	  		    		if (cont3>=90) cont3=0;
+	  		    		cont1=cont1+1;
+	  		    		cont2=cont2+2;
+	  		    		cont3=cont3+3;
+	  		    		cont4=cont4+1;
+	  		    		sprintf(data2,"{\"temperatura\":%u,\"humedad\":%u,\"bateria\":%u}",cont1,cont2,cont3);
+	  		    		ubibots=PUBLICAR_MQTT;
+	  		    	}
+				}
+	  		    break;
+	  	   case DESCONECTAR_MQTT:
+	  		   if (disconnect_server_mqtt(&config_module,&config_parameters_mqtt)==FT_BG96_OK)
+	  		   {
+	  			   ubibots=DESCONECTAR_PDP;
+	  		   }
+
+	  	   case DESCONECTAR_PDP:
+	  		   if (desactivate_context_pdp(&config_module,&config_context_tcp)==FT_BG96_OK)
+	  		   {
+	  			 ubibots=ACTIVAR_PDP;
+		    	}
+	  		   break;
+
+	  	  default:
+	  		  break;
+	  	}
+	  	HAL_Delay(10000);*/
+
+
   }
   /* USER CODE END 3 */
 }
@@ -146,25 +250,13 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Configure LSE Drive Capability
-  */
-  HAL_PWR_EnableBkUpAccess();
-  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE|RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSICalibrationValue = 0;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
-  RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 40;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -173,28 +265,66 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
-  /** Enable MSI Auto calibration
-  */
-  HAL_RCCEx_EnableMSIPLLMode();
 }
 
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+    huart1.Instance = USART1;
+    huart1.Init.BaudRate = 115200;
+    huart1.Init.WordLength = UART_WORDLENGTH_8B;
+    huart1.Init.StopBits = UART_STOPBITS_1;
+    huart1.Init.Parity = UART_PARITY_NONE;
+    huart1.Init.Mode = UART_MODE_TX_RX;
+    huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+    huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    if (HAL_UART_Init(&huart1) != HAL_OK)
+    {
+    	Error_Handler();
+    }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+	}
 
 /**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
-{
+//void MX_USART2_UART_Init(void)
+//{
 
   /* USER CODE BEGIN USART2_Init 0 */
 
@@ -203,25 +333,25 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 1 */
 
   /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//  huart2.Instance = USART2;
+ // huart2.Init.BaudRate = 115200;
+ // huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  //huart2.Init.StopBits = UART_STOPBITS_1;
+ // huart2.Init.Parity = UART_PARITY_NONE;
+ // huart2.Init.Mode = UART_MODE_TX_RX;
+ // huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+ // huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+ // huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+ // huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  //if (HAL_UART_Init(&huart2) != HAL_OK)
+ // {
+  //  Error_Handler();
+ // }
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
 
-}
+//}
 
 /**
   * @brief GPIO Initialization Function
@@ -250,6 +380,36 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+em_bg96_error_handling send_data(char*cmd, char*expect,char *buffer,uint32_t timeout)
+{
+	HAL_UART_Transmit(&huart2,cmd,strlen(cmd),300);
+	HAL_UART_Transmit(&huart1,cmd,strlen(cmd),300);
+
+	HAL_UART_Receive_IT(&huart1,buffer,150);
+	for (uint8_t i= 0; i<timeout; i++)
+	{
+		HAL_Delay(1);
+		if (expect !=NULL)
+			{
+				if(strstr(buffer,expect)!=NULL)
+					{
+						HAL_UART_Transmit(&huart2,buffer,strlen(buffer),500);
+						HAL_UART_AbortReceive_IT(&huart1);
+						return FT_BG96_OK;
+					}
+			}
+	}
+	HAL_UART_AbortReceive_IT(&huart1);
+	return FT_BG96_TIMEOUT;
+}
+
+
+void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart)
+{
+	memset(buffer,0,150);
+	//HAL_UART_Receive_IT(&huart1,buffer,150);
+}
+
 
 /* USER CODE END 4 */
 
