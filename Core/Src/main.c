@@ -44,7 +44,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 aht10_config_t aht10_config;
@@ -121,115 +120,24 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   aht10Init(&aht10_config,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port);
-  max17043Init(&max17043_config,write_I2C_STM32L432_port,read_I2C_STM32L432_port,delay_STM32L432_port);
   init_driver(&config_module,send_data);
   /* USER CODE BEGIN 2 */
-  st_config_context_tcp config_context_tcp={.context_id=1,.context_type=1,.tcp_apn="4g.entel",.tcp_username="",.tcp_password="",.method_authentication=1};
-  st_config_parameters_mqtt config_parameters_mqtt={.identifier_socket_mqtt=0,.quality_service=0,.host_name="\"industrial.api.ubidots.com\"",.port=1883,.mqtt_client_id="123456789",.mqtt_username="BBFF-YymzfOGNgPBLoxxhddQT99r9Wq77rL",.mqtt_password="BBFF-YymzfOGNgPBLoxxhddQT99r9Wq77rL"};
-  estados_mqtt ubibots=VERIFICARCONEXION;
-  char topic[]="/v1.6/devices/monitoreo_iot";
 
   /* USER CODE END 2 */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
- /* char buffer2[10];
-  memset(buffer,0,150);
-  aht10_start_measurement(&aht10_config);
+  //aht10_start_measurement(&aht10_config);
   int8_t temperatura=0;
   uint8_t humedad=0;
-  char buffersensore[50];*/
-  uint16_t version=0;
-  uint16_t configuracion=0;
-  char buffermedidor[50];
+  char buffersensore[50];
   while (1)
   {
-    /* USER CODE END WHILE */
-	 /* aht10_get_humedity(&aht10_config, &humedad);
+	  aht10_launch_measurement(&aht10_config);
+	  aht10_get_humedity(&aht10_config, &humedad);
 	  aht10_get_temperature(&aht10_config, &temperatura);
 	  sprintf(buffersensore,"humedad:%u  temperatura:%i \r\n",humedad,temperatura);
 	  HAL_UART_Transmit(&huart2,buffersensore,50,200);
-	  HAL_Delay(100);*/
-	  version=max17043GetVersion(&max17043_config);
-	  HAL_Delay(100);
-	  configuracion=max17043_get_config(&max17043_config);
-	  HAL_Delay(100);
-	  sprintf(buffermedidor,"vesion:%u  temperatura:%i \r\n",version,configuracion);
-	  HAL_UART_Transmit(&huart2,buffermedidor,50,200);
 	  HAL_Delay(200);
-
-
-	 /* switch(ubibots)
-	  	{
-	  	  case VERIFICARCONEXION:
-	  		  if (get_status_modem(&config_module)==FT_BG96_OK)
-	  		  {
-	  			  ubibots=SETEAR_APN;
-		      }
-	  		  break;
-	  	  case SETEAR_APN:
-	  		  if (set_parameter_context_tcp(&config_module,&config_context_tcp)==FT_BG96_OK)
-	  		  {
-	  			  ubibots=ACTIVAR_PDP;
-	  		  }
-	  		  break;
-	  	  case ACTIVAR_PDP:
-	  		  if (activate_context_pdp(&config_module,&config_context_tcp)==FT_BG96_OK)
-	  		   {
-	  			  ubibots=OPEN_SERVER;
-	  		   }
-	  		  break;
-	  	  case OPEN_SERVER:
-	  		  if (open_client_mqtt(&config_module,&config_parameters_mqtt)==FT_BG96_OK)
-	  		   {
-	  			  ubibots=CONECTAR_MQTT;
-			   }
-	  		  break;
-	  	   case CONECTAR_MQTT:
-	  		   if (connect_server_mqtt(&config_module,&config_parameters_mqtt)==FT_BG96_OK)
-	  		   {
-	  			  ubibots=PUBLICAR_MQTT;
-	  		   }
-	  		   break;
-	  	   case PUBLICAR_MQTT:
-	  		    if (publish_message(&config_module,&config_parameters_mqtt,topic,data2)==FT_BG96_OK)
-	  		    {
-	  		    	if (cont4>=20) {
-						ubibots=DESCONECTAR_MQTT;
-						cont4=0;
-					}
-	  		    	else
-	  		    	{
-	  		    		memset(data2,0,60);
-	  		    		if (cont1>=90) cont1=0;
-	  		    		if (cont2>=90) cont2=0;
-	  		    		if (cont3>=90) cont3=0;
-	  		    		cont1=cont1+1;
-	  		    		cont2=cont2+2;
-	  		    		cont3=cont3+3;
-	  		    		cont4=cont4+1;
-	  		    		sprintf(data2,"{\"temperatura\":%u,\"humedad\":%u,\"bateria\":%u}",cont1,cont2,cont3);
-	  		    		ubibots=PUBLICAR_MQTT;
-	  		    	}
-				}
-	  		    break;
-	  	   case DESCONECTAR_MQTT:
-	  		   if (disconnect_server_mqtt(&config_module,&config_parameters_mqtt)==FT_BG96_OK)
-	  		   {
-	  			   ubibots=DESCONECTAR_PDP;
-	  		   }
-
-	  	   case DESCONECTAR_PDP:
-	  		   if (desactivate_context_pdp(&config_module,&config_context_tcp)==FT_BG96_OK)
-	  		   {
-	  			 ubibots=ACTIVAR_PDP;
-		    	}
-	  		   break;
-
-	  	  default:
-	  		  break;
-	  	}
-	  	HAL_Delay(10000);*/
-
 
   }
   /* USER CODE END 3 */

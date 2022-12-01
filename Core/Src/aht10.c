@@ -26,7 +26,7 @@ aht10_status aht10_get_status(aht10_config_t *obj)
   status= obj->readI2C(AHT10_ADDRESS_SLAVE ,buffer,1);
   if (status==AHT10_OK)
   {
-    if (buffer[0]>>7==0)                     //El estado del sensor esta en la posicion 8 del byte por eso de desplaza 7 posiciones
+    if (buffer[0]>>7==0)  //El estado del sensor esta en la posicion 8 del byte por eso de desplaza 7 posiciones
       return SENSOR_IDLE;
     else if (buffer[0]>>7==1)
       return SENSOR_BUSY;
@@ -47,19 +47,8 @@ aht10_status_fnc aht10_start_measurement(aht10_config_t *obj)
 
 aht10_status_fnc aht10_launch_measurement(aht10_config_t *obj)
 {
-  uint8_t cmd[2]= {AHT10_CMD_TRIGGER_MEASUREMENT,0x33,0x00};
+  uint8_t cmd[3]= {AHT10_CMD_TRIGGER_MEASUREMENT,0x00,0x00};
   aht10_status_fnc status = obj->writeI2C(AHT10_ADDRESS_SLAVE ,cmd,3);
-  if (status==AHT10_OK)
-  {
-    obj->delay_ms_I2C(AHT10_DELAY_LAUNCH_MEASUREMENT);
-    if (aht10_get_status(obj)==SENSOR_IDLE)
-    {
-      aht10_status_fnc status = obj->writeI2C(AHT10_ADDRESS_SLAVE ,cmd,3);
-      obj->delay_ms_I2C(AHT10_DELAY_LAUNCH_MEASUREMENT);
-      return status;
-    }
-    else status=AHT10_ERROR;
-  }
   return  status;
 }
 
@@ -71,16 +60,15 @@ aht10_status_fnc aht10_get_humedity(aht10_config_t*obj, uint8_t *data)
   } 
   uint8_t bufferRead[6]={0};
   uint32_t data_humedity=0;
-  aht10_status_fnc status=aht10_launch_measurement(obj);
-  if (status==AHT10_OK)
-  {
+  aht10_status_fnc status=AHT10_ERROR;
+  //status=aht10_launch_measurement(obj);
+
     status= obj->readI2C(AHT10_ADDRESS_SLAVE,bufferRead,6);
     if (status==AHT10_OK)
     {
       data_humedity=(((uint32_t)bufferRead[1]<<16) | ((uint16_t)bufferRead[2]<<8) | (bufferRead[3]))>>4;
       *data= HUMEDITY(data_humedity);
     }
-  }
   return status;
 }
 
@@ -89,16 +77,13 @@ aht10_status_fnc aht10_get_temperature(aht10_config_t*obj, int8_t *data)
   uint8_t buffer_read[6]={0};
   uint32_t data_temperature=0;
   aht10_status_fnc status=AHT10_ERROR;
-  status=aht10_launch_measurement(obj);
-  if (status==AHT10_OK)
-  {
+  //status=aht10_launch_measurement(obj);
     status=obj->readI2C(AHT10_ADDRESS_SLAVE ,buffer_read,6);
     if (status==AHT10_OK)
     {
       data_temperature=((uint32_t)(buffer_read[3] & 0x0F)<<16) | ((uint16_t) buffer_read[4]<<8)| buffer_read[5];
       *data= TEMPERATURE(data_temperature);
     }
-  }
   return status;
 }
 

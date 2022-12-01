@@ -19,7 +19,7 @@
 #include "main.h"
 #include "aht10.h"
 
-UART_HandleTypeDef huart2;
+extern  UART_HandleTypeDef huart2;
 /** @defgroup Prototipo de funciones
  *
  */
